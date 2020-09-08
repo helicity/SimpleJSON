@@ -1,0 +1,890 @@
+{
+	"align" : 
+	{
+		"desc" : "매칭 기반 얼라인(모듈 외곽 기준)",
+		"image_index_focus" : 4,
+		"image_index_light" : 3,
+		"min_score" : 0.7,
+        "hahaha" : [ 1,2,3,4,5,6,7,8,9 ],
+		"aperture" : 
+		{
+			"desc" : "모듈 상부 렌즈 조리개 부분은 별도로 영역 찾기(매칭 기반)",
+			"image_index_focus" : 1,
+			"image_index_light" : 4,
+			"image_color" : "gray",
+			"radius_mm" : 0.675,
+			"scale_min" : 0.95,
+			"scale_max" : 1.05,
+			"min_contrast" : 8,
+			"min_score" : 0.5
+		}
+	},
+
+	"inspection" : 
+	{
+		"desc" : "검사",
+		"enable" : true,
+		"use_tape" : true,
+
+		"tape" : 
+		{
+			"desc" : "보호테이프 이물 검사(과검 제거용)",
+			"image_index_focus" : 0,
+			"image_index_light" : 5,
+			"image_color" : "gray",
+			"radius" : 380,
+			"threshold_1" : 40,
+			"threshold_2" : 12,
+			"min_area" : 10	,
+			"extend_size" : 6
+		},
+		
+		"aperture" : 
+		{
+			"desc" : "조리개(렌즈알) 검사",
+			"enable" : true,
+
+			"surface" :
+			{
+				"surface1" : 
+				{
+					"desc" : "표면 백점\/반짝이 검사 1",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "fixed",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 0,	
+							"radius_start_mm" : 0,
+							"radius_end_mm" : 0.65,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : 100,
+							"threshold_h" : 255,
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 5
+						}
+					],					
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30.0,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 120.0,
+					"judge_max_gray" : 255.0
+				},
+
+				"surface2" :
+				{
+					"desc" : "표면 백점\/반짝이 검사 2",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "polar",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 3,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 0,								
+							"radius_start_mm" : 0,
+							"radius_end_mm" : 0.65,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : 0.5,
+							"threshold" : 6,
+							"remove_area" : 15
+						}
+					],
+					"merge_range_mm" : 0.05,
+					"judge_min_area" : 5,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 0,
+					"judge_max_gray" : 255
+				},
+
+				"surface3" : 
+				{
+					"desc" : "표면 흑점 검사",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "local",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 0,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 0,								
+							"radius_start_mm" : 0,
+							"radius_end_mm" : 0.65,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "dark",
+							"mask_size" : 25,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : 0.1,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 15
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 5,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 0,
+					"judge_max_gray" : 255
+				},
+
+				"surface4" :
+				{
+					"desc" : "표면 얼룩 검사",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "local",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 0,								
+							"radius_start_mm" : 0,
+							"radius_end_mm" : 0.65,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : 25,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : 0.1,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 1
+						},
+						{
+							"type" : "local",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 0,								
+							"radius_start_mm" : 0,
+							"radius_end_mm" : 0.65,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : 25,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : 0.08,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 1
+						},
+						{
+							"type" : "local",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 0,								
+							"radius_start_mm" : 0,
+							"radius_end_mm" : 0.62,
+							"reduce_roi_mm" : 0.4,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : 25,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : 0.05,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 1
+						}
+					],
+					"judge_min_area" : 2,
+					"judge_min_size_mm" : 0.01,
+					"judge_min_count" : 5
+				}
+			},
+
+			"inside" :
+			{
+				"inside1" :
+				{
+					"desc" : "안쪽 이물 1",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "local",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 2,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 0,								
+							"radius_start_mm" : 0,
+							"radius_end_mm" : 0.65,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : 25,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : 0.1,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 15
+						}
+					],
+					"merge_range_mm" : 0.05,
+					"judge_min_area" : 5,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 0,
+					"judge_max_gray" : 255
+				},
+				
+				"inside2" :
+				{
+					"desc" : "1안쪽 이물 2",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "polar",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 2,
+							"image_index_light" : 3,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 0,								
+							"radius_start_mm" : 0,
+							"radius_end_mm" : 0.62,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : 0.5,
+							"threshold" : 6,
+							"remove_area" : 15
+						}
+					],					
+					"merge_range_mm" : 0.05,
+					"judge_min_area" : 5,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 0,
+					"judge_max_gray" : 255
+				}
+			}
+		},
+		
+		"lens" : 
+		{
+			"desc" : "렌즈(배럴) 검사",
+			"enable" : true,
+
+			"barrel_a" : 
+			{
+				"desc" : "렌즈알 바깥쪽 얇은 띠 + A(주요부위)",
+				"barrel1" : 
+				{
+					"desc" : "렌즈알 바깥쪽 얇은 띠",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "fixed",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 1,								
+							"radius_start_mm" : 0.72,
+							"radius_end_mm" : 0.9,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : 180,
+							"threshold_h" : 255,	
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 5
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 120,
+					"judge_max_gray" : 255
+				},
+				
+				"barrel2" : 
+				{
+					"desc" : "렌즈알 바깥쪽 얇은 띠",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "local",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 1,								
+							"radius_start_mm" : 0.72,
+							"radius_end_mm" : 0.9,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : 25,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : 0.5,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 5
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 120,
+					"judge_max_gray" : 255
+				},
+				
+				"barrel3" : 
+				{
+					"desc" : "렌즈알 바깥쪽 얇은 띠",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "dynamic",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 1,								
+							"radius_start_mm" : 0.72,
+							"radius_end_mm" : 0.9,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : -1,
+							"threshold" : 40,
+							"remove_area" : 5
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 120,
+					"judge_max_gray" : 255
+				},
+				
+				"barrel4" : 
+				{
+					"desc" : "렌즈알 바깥쪽 얇은 띠",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "polar",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 1,								
+							"radius_start_mm" : 0.72,
+							"radius_end_mm" : 0.9,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : 0.5,
+							"threshold" : 40,
+							"remove_area" : 5
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 120,
+					"judge_max_gray" : 255
+				}
+			},
+			
+			"barrel_b" : 
+			{
+				"desc" : "렌즈알 바깥쪽 얇은 띠 + B(바깥부위)",
+				"barrel1" : 
+				{
+					"desc" : "렌즈알 바깥쪽 얇은 띠",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "fixed",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 1,								
+							"radius_start_mm" : 0.72,
+							"radius_end_mm" : 0.9,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : 180,
+							"threshold_h" : 255,	
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 5
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 120,
+					"judge_max_gray" : 255
+				},
+				
+				"barrel2" : 
+				{
+					"desc" : "렌즈알 바깥쪽 얇은 띠",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "local",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 1,								
+							"radius_start_mm" : 0.72,
+							"radius_end_mm" : 0.9,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : 25,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : 0.5,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 5
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 120,
+					"judge_max_gray" : 255
+				},
+				
+				"barrel3" : 
+				{
+					"desc" : "렌즈알 바깥쪽 얇은 띠",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "dynamic",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 1,								
+							"radius_start_mm" : 0.72,
+							"radius_end_mm" : 0.9,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : -1,
+							"threshold" : 40,
+							"remove_area" : 5
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 120,
+					"judge_max_gray" : 255
+				},
+				
+				"barrel4" : 
+				{
+					"desc" : "렌즈알 바깥쪽 얇은 띠",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "polar",
+							"roi_type" : "circle",
+							"classify_layer" : true,
+							"image_index_focus" : 1,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 1,								
+							"radius_start_mm" : 0.72,
+							"radius_end_mm" : 0.9,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : 0.5,
+							"threshold" : 40,
+							"remove_area" : 5
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 120,
+					"judge_max_gray" : 255
+				}
+			}
+		},
+		
+		"frame" : 
+		{
+			"desc" : "frame 검사",
+			"enable" : true,
+			
+			"holder" : 
+			{
+				"desc" : "...",
+				"holder1" : 
+				{
+					"desc" : "...",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "fixed",
+							"roi_type" : "draw",
+							"classify_layer" : false,
+							"image_index_focus" : 3,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 1,
+							"radius_start_mm" : -1,
+							"radius_end_mm" : -1,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : 0,
+							"threshold_h" : 50,	
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 5
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 120,
+					"judge_max_gray" : 255
+				},
+				
+				"holder2" : 
+				{
+					"desc" : "...",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "local",
+							"roi_type" : "draw",
+							"classify_layer" : false,
+							"image_index_focus" : 4,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 1,								
+							"radius_start_mm" : -1,
+							"radius_end_mm" : -1,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "dark",
+							"mask_size" : 25,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : 0.8,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 5
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30,
+					"judge_min_size_mm" : 1,
+					"judge_min_gray" : 120,
+					"judge_max_gray" : 255
+				},
+				
+				"holder3" : 
+				{
+					"desc" : "...",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "dynamic",
+							"roi_type" : "draw",
+							"classify_layer" : false,
+							"image_index_focus" : 4,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 1,								
+							"radius_start_mm" : -1,
+							"radius_end_mm" : -1,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : -1,
+							"threshold_h" : -1,	
+							"light_dark" : "dark",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : -1,
+							"threshold" : 100,
+							"remove_area" : 5
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 30,
+					"judge_min_size_mm" : 0.08,
+					"judge_min_gray" : 120,
+					"judge_max_gray" : 255
+				}
+			},
+			
+			"epoxy" : 
+			{
+				"desc" : "...",
+				"epoxy1" : 
+				{
+					"desc" : "holder\/pcb bonding check",
+					"enable" : true,
+					"detection" :
+					[
+						{
+							"type" : "fixed",
+							"roi_type" : "draw",
+							"classify_layer" : true,
+							"image_index_focus" : 4,
+							"image_index_light" : 5,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 7,
+							"radius_start_mm" : -1,
+							"radius_end_mm" : -1,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : 0,
+							"threshold_h" : 30,	
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 50
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 8000,
+					"judge_min_size_mm" : 0.3,
+					"judge_min_gray" : 0,
+					"judge_max_gray" : 255
+				},
+				
+				"epoxy2" : 
+				{
+					"desc" : "",
+					"enable" : false,
+					"detection" :
+					[
+						{
+							"type" : "fixed",
+							"roi_type" : "draw",
+							"classify_layer" : true,
+							"image_index_focus" : 3,
+							"image_index_light" : 4,
+							"image_color" : "gray",
+							"scale_mult" : 1,
+							"scale_add" : 0,
+							"smooth" : 7,
+							"radius_start_mm" : -1,
+							"radius_end_mm" : -1,
+							"reduce_roi_mm" : 0,
+							"threshold_l" : 0,
+							"threshold_h" : 30,	
+							"light_dark" : "light",
+							"mask_size" : -1,
+							"mask_size_ver" : -1,
+							"mask_size_hor" : -1,
+							"scale" : -1,
+							"pitch_mm" : -1,
+							"threshold" : -1,
+							"remove_area" : 50
+						}
+					],
+					"merge_range_mm" : 0.03,
+					"judge_min_area" : 8000,
+					"judge_min_size_mm" : 0.3,
+					"judge_min_gray" : 0,
+					"judge_max_gray" : 255
+				}
+			}
+		}
+	},
+
+	"measurement" : 
+	{
+		"desc" : "측정(모듈 크기, 듀얼, 트리플 상대 거리 등)",
+		"enable" : true,
+
+		"size" : 
+		{
+			"desc" : "가로\/세로 크기 측정",
+			"enable" : true,
+			"image_index_focus" : 4,
+			"image_index_light" : 7,
+			"image_color" : "gray",
+			"scale_mult" : 1,
+			"scale_add" : 0,
+
+			"size_h" : 
+			{
+				"threshold" : 8,
+				"judge_min_size_mm" : 6.45,
+				"judge_max_size_mm" : 6.65
+			},
+			
+			"size_v" : 
+			{
+				"threshold" : 10,
+				"judge_min_size_mm" : 6.85,
+				"judge_max_size_mm" : 7.05
+			}
+		}
+	},
+
+	"display" :
+	{
+		"desc" : "판정 이미지 출력을 위한 설정",
+		"image_index_focus" : 1,
+		"image_index_light" : 3,
+
+		"window_size" : 1536
+	}
+}

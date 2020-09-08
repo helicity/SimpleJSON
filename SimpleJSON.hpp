@@ -1,10 +1,10 @@
-// from https://github.com/nbsdx/SimpleJSON
+Ôªø// from https://github.com/nbsdx/SimpleJSON
 //
 // modified by jeffrey
 //
 
 /*
-#include "enscape.hpp"
+#include "SimpleJSON.hpp"
 #include <iostream>
 #include <cstddef>
 #include <ios>
@@ -14,71 +14,71 @@ using namespace std;
 
 void test()
 {
-    // ∆ƒ¿œø°º≠ ∫“∑Øø¿±‚
+    // ÌååÏùºÏóêÏÑú Î∂àÎü¨Ïò§Í∏∞
     std::ifstream file_in("../json_sample/module_h0_s0.json");
     EJSON obj = EJSON::Load(file_in);
     std::cout << obj << std::endl;
 
-    // Ω∫∆Æ∏µ πˆ∆€ø°º≠ ∫“∑Øø¿±‚
+    // Ïä§Ìä∏ÎßÅ Î≤ÑÌçºÏóêÏÑú Î∂àÎü¨Ïò§Í∏∞
     std::string text = R"(  { "name" : "hahaha", "score" : 13, "friends" : [ "james", "sam" ] }  )";
     obj = EJSON::Load(text);
 
-    // ≈ÿΩ∫∆Æ »≠∏Èø° √‚∑¬
-    EJSON::SetOutputFormat(2); // output with shortest format
+    // ÌÖçÏä§Ìä∏ ÌôîÎ©¥Ïóê Ï∂úÎ†•
+    EJSON::SetOutputFormat(2);   // output with shortest format
     //EJSON::SetOutputFormat(1); // output with condensed format
     //EJSON::SetOutputFormat(0); // output with normal format
     std::cout << obj << std::endl;
     std::cout << "--------------------------------------------\n";
 
-    // ∆ƒ¿œ∑Œ ¿˙¿Â
+    // ÌååÏùºÎ°ú Ï†ÄÏû•
     std::ofstream file_out("output.json");
     file_out << obj;
 
 
-    // ø¿∫Í¡ß∆Æ µø¿˚¿∏∑Œ ª˝º∫ (ø¿∫Í¡ß∆Æ¥¬ string¿∏∑Œ ¿Œµ¶ΩÃ «—¥Ÿ)
-    obj = enscape::Object();
-    obj["name"] = "hahaha";                     // { "name" : "hahaha" }
-    obj["score"] = 13;                           // { "name" : "hahaha", "score" : 13 }
-    obj["friends"] = { "james", "best" };          // { "name" : "hahaha", "score" : 13, "friends" : { "james" : "best" } }
-    obj["friends"] = enscape::Array("ridia", "jack"); // { "name" : "hahaha", "score" : 13, "friends" : [ "ridia", "jack" ] }
+    // Ïò§Î∏åÏ†ùÌä∏ ÎèôÏ†ÅÏúºÎ°ú ÏÉùÏÑ± (Ïò§Î∏åÏ†ùÌä∏Îäî stringÏúºÎ°ú Ïù∏Îç±Ïã± ÌïúÎã§)
+    obj = EJSON::Object();
+    obj["name"] = "hahaha";                         // { "name" : "hahaha" }
+    obj["score"] = 13;                              // { "name" : "hahaha", "score" : 13 }
+    obj["friends"] = { "james", "best" };           // { "name" : "hahaha", "score" : 13, "friends" : { "james" : "best" } }
+    obj["friends"] = EJSON::Array("ridia", "jack"); // { "name" : "hahaha", "score" : 13, "friends" : [ "ridia", "jack" ] }
     std::cout << obj << std::endl;
     std::cout << "--------------------------------------------\n";
 
-    // æÓ∑π¿Ã µø¿˚¿∏∑Œ ª˝º∫ (æÓ∑π¿Ã¥¬ int∑Œ ¿Œµ¶ΩÃ «—¥Ÿ)
-    EJSON array = enscape::Array();;
-    array[2] = 15;     // [null, null, 15]
-    array[1] = true;     // [null, true, 15]
-    array[0] = 13;     // [13, true, 15]
-    array.append(77); // «◊ªÛ array∞° µ«æÓπˆ∏∞¥Ÿ. array∞° æ∆¥œæ˙¥Ÿ∏È ±‚¡∏ µ•¿Ã≈Õ¥¬ ¥Ÿ≥Øæ∆∞®!!!
+    // Ïñ¥Î†àÏù¥ ÎèôÏ†ÅÏúºÎ°ú ÏÉùÏÑ± (Ïñ¥Î†àÏù¥Îäî intÎ°ú Ïù∏Îç±Ïã± ÌïúÎã§)
+    EJSON array = EJSON::Array();;
+    array[2] = 15;    // [null, null, 15]
+    array[1] = true;  // [null, true, 15]
+    array[0] = 13;    // [13, true, 15]
+    array.append(77); // Ìï≠ÏÉÅ arrayÍ∞Ä ÎêòÏñ¥Î≤ÑÎ¶∞Îã§. arrayÍ∞Ä ÏïÑÎãàÏóàÎã§Î©¥ Í∏∞Ï°¥ Îç∞Ïù¥ÌÑ∞Îäî Îã§ÎÇ†ÏïÑÍ∞ê!!!
     std::cout << array << std::endl;
     std::cout << "--------------------------------------------\n";
 
-    // «◊∏Ò ª¿‘
-    EJSON array2 = enscape::Array(1, "haha", true); // [1, "haha", true]
+    // Ìï≠Î™© ÏÇΩÏûÖ
+    EJSON array2 = EJSON::Array(1, "haha", true); // [1, "haha", true]
     array[3] = array2; // [13, 14, 15, [1, "haha", true] ]
-    //array[3]    = enscape::Array( 1, "haha", true); // µø¿œ
+    //array[3]    = EJSON::Array( 1, "haha", true); // ÎèôÏùº
     std::cout << array << std::endl;
     std::cout << "--------------------------------------------\n";
 
-    // «◊∏Ò ªË¡¶
-    obj.remove("friends"); // æ¯¿∏∏È æ∆π´¿œµµ æ»¿œæÓ≥≤
+    // Ìï≠Î™© ÏÇ≠Ï†ú
+    obj.remove("friends"); // ÏóÜÏúºÎ©¥ ÏïÑÎ¨¥ÏùºÎèÑ ÏïàÏùºÏñ¥ÎÇ®
     std::cout << obj << std::endl;
     std::cout << "--------------------------------------------\n";
 
-    // «◊∏Ò ª¿‘
-    obj["my_info"] = { "age", 35, "handsome", true, "family", enscape::Array("AlexandraDaddario", "ChouTzuYu", "LeeChaeYeon") };
+    // Ìï≠Î™© ÏÇΩÏûÖ
+    obj["my_info"] = { "age", 35, "handsome", true, "family", EJSON::Array("AlexandraDaddario", "ChouTzuYu", "LeeChaeYeon") };
     std::cout << obj << std::endl;
     std::cout << "--------------------------------------------\n";
 
-    // ø¿∫Í¡ß∆Æ ¡æ∑˘ ∫Ø∞Ê (±‚¡∏ µ•¿Ã≈Õ¥¬ ∞Ê∞Ìæ¯¿Ã ¥Ÿ≥Øæ∆∞®!)
-    obj[0] = 111; // array∑Œ ∫Ø∞Ê
-    obj = true; // bool ∑Œ ∫Ø∞Ê
-    obj = "Test String"; // string¿∏∑Œ ∫Ø∞Ê
+    // Ïò§Î∏åÏ†ùÌä∏ Ï¢ÖÎ•ò Î≥ÄÍ≤Ω (Í∏∞Ï°¥ Îç∞Ïù¥ÌÑ∞Îäî Í≤ΩÍ≥†ÏóÜÏù¥ Îã§ÎÇ†ÏïÑÍ∞ê!)
+    obj[0] = 111; // arrayÎ°ú Î≥ÄÍ≤Ω
+    obj = true; // bool Î°ú Î≥ÄÍ≤Ω
+    obj = "Test String"; // stringÏúºÎ°ú Î≥ÄÍ≤Ω
     std::cout << obj << std::endl;
     std::cout << "--------------------------------------------\n";
 
-    // ¥Ÿ¡ﬂ ¿Œµ¶ΩÃ
-    obj = enscape::Object();
+    // Îã§Ï§ë Ïù∏Îç±Ïã±
+    obj = EJSON::Object();
     obj["AAA"] = "aaa";           // {"AAA":"aaa"}
     obj["bbb"]["aa"] = 11;          // {"AAA":"aaa","bbb":{"aa":11}}
     obj["bbb"]["bb"] = 22;          // {"AAA":"aaa","bbb":{"aa":11,"bb":22}}
@@ -86,20 +86,22 @@ void test()
     std::cout << obj << std::endl;
     std::cout << "--------------------------------------------\n";
 
-    // ¡æ∑˘ æÚ±‚
-    if (obj.GetType() == EJSON::Class::Object) cout << "Object!!" << endl;
-    if (array.GetType() == EJSON::Class::Array) cout << "Array!!" << endl;
+    // Ï¢ÖÎ•ò ÏñªÍ∏∞
+    if (obj.GetType()   == EJSON::Class::Object) cout << "Object!!" << endl;
+    if (array.GetType() == EJSON::Class::Array ) cout << "Array!!"  << endl;
+    if (obj.IsObject()) cout << "Object!!" << endl;
+    if (arrayIsArray()) cout << "Array!!"  << endl;
     std::cout << "--------------------------------------------\n";
 
-    // ø¿∫Í¡ß∆Æ º¯»∏«œ±‚ (ø¿∫Í¡ß∆Æ æ∆¥— ∞ÊøÏ¥¬ æ∆π´∞Õµµ æ»≥™ø¬¥Ÿ)
+    // Ïò§Î∏åÏ†ùÌä∏ ÏàúÌöåÌïòÍ∏∞ (Ïò§Î∏åÏ†ùÌä∏ ÏïÑÎãå Í≤ΩÏö∞Îäî ÏïÑÎ¨¥Í≤ÉÎèÑ ÏïàÎÇòÏò®Îã§)
     for (auto &o : obj.ObjectRange())  std::cout << "Object[ " << o.first << " ] = " << o.second << "\n";
     std::cout << "--------------------------------------------\n";
 
-    // æÓ∑π¿Ã º¯»∏«œ±‚ (æÓ∑π¿Ã æ∆¥— ∞ÊøÏ¥¬ æ∆π´∞Õµµ æ»≥™ø¬¥Ÿ)
+    // Ïñ¥Î†àÏù¥ ÏàúÌöåÌïòÍ∏∞ (Ïñ¥Î†àÏù¥ ÏïÑÎãå Í≤ΩÏö∞Îäî ÏïÑÎ¨¥Í≤ÉÎèÑ ÏïàÎÇòÏò®Îã§)
     for (auto &a : array.ArrayRange())        std::cout << "Value: " << a << "\n";
     std::cout << "--------------------------------------------\n";
 
-    // ∆˜«‘ ∞ÀªÁ
+    // Ìè¨Ìï® Í≤ÄÏÇ¨
     cout << boolalpha << obj.has("AAA") << endl;
     cout << boolalpha << array.has(13) << endl;
 }
@@ -136,7 +138,7 @@ namespace enscape
 
     class EJSON
     {
-        struct BackingData // 200827 jeffrey : union to struct, adding Key
+        struct BackingData // 200827 jeffrey : union to struct, by adding Key
         {
             BackingData( double d ) : Float ( d ){}
             BackingData( long   l ) : Int   ( l ){}
@@ -144,8 +146,8 @@ namespace enscape
             BackingData( string s ) : String( new string( s ) ){}
             BackingData()           : Int   ( 0 ){}
 
-            deque<EJSON>*        List   = nullptr;
-            map<string, EJSON>*  Map    = nullptr;
+            deque<EJSON>*       List   = nullptr;
+            map<string, EJSON>* Map    = nullptr;
             deque<string>*      Key    = nullptr;
             string*             String = nullptr;
             double              Float;
@@ -171,13 +173,13 @@ namespace enscape
             Container *object;
 
             public:
-                JSONWrapper( Container *val ) : object( val ) {}
-                JSONWrapper( std::nullptr_t )  : object( nullptr ) {}
+                JSONWrapper( Container *val ) : object( val     ) {}
+                JSONWrapper( std::nullptr_t ) : object( nullptr ) {}
 
-                typename Container::iterator begin() { return object ? object->begin() : typename Container::iterator(); }
-                typename Container::iterator end() { return object ? object->end() : typename Container::iterator(); }
+                typename Container::iterator begin()             { return object ? object->begin() : typename Container::iterator(); }
+                typename Container::iterator end()               { return object ? object->end()   : typename Container::iterator(); }
                 typename Container::const_iterator begin() const { return object ? object->begin() : typename Container::iterator(); }
-                typename Container::const_iterator end() const { return object ? object->end() : typename Container::iterator(); }
+                typename Container::const_iterator end() const   { return object ? object->end()   : typename Container::iterator(); }
         };
 
         template <typename Container>
@@ -190,7 +192,7 @@ namespace enscape
                 JSONConstWrapper( std::nullptr_t )  : object( nullptr ) {}
 
                 typename Container::const_iterator begin() const { return object ? object->begin() : typename Container::const_iterator(); }
-                typename Container::const_iterator end() const { return object ? object->end() : typename Container::const_iterator(); }
+                typename Container::const_iterator end()   const { return object ? object->end()   : typename Container::const_iterator(); }
         };
 
         EJSON();
@@ -218,6 +220,19 @@ namespace enscape
         static EJSON Make(Class type);
         static EJSON Load(std::istream &);
         static EJSON Load(const string &);
+
+        static EJSON Object();
+        static EJSON Array();
+
+        const std::deque<std::string>* GetNames() const { return Internal.Key; }
+
+        template <typename... T>
+        static EJSON Array(T... args)
+        {
+            EJSON arr = EJSON::Make(EJSON::Class::Array);
+            arr.append(args...);
+            return std::move(arr);
+        }
 
         template <typename T>
         void append( T arg )
@@ -255,11 +270,13 @@ namespace enscape
             SetType( Class::String ); *Internal.String = string( s ); return *this;
         }
 
-        EJSON& operator[](const string &key);
+        EJSON& operator[](const string& key);
+        ////const EJSON& operator[](const string& key) const;
 
         EJSON& operator[](unsigned index);
+        ////const EJSON& operator[](const unsigned index) const;
 
-        EJSON &at(const string &key);
+        ////EJSON &at(const string &key);
 
         const EJSON &at(const string &key) const;
 
@@ -267,7 +284,8 @@ namespace enscape
 
         const EJSON &at(unsigned index) const;
 
-        void remove(const string& key);
+        bool remove(const string& key); // remove subitem from object
+        bool remove(const int index);   // remove subitem from array
 
         int length() const;
 
@@ -353,6 +371,12 @@ namespace enscape
 
     public:
         Class GetType() { return Type; }
+        bool IsObject() const  { return this->Type == EJSON::Class::Object; }
+        bool IsArray() const   { return this->Type == EJSON::Class::Array; }
+        bool IsString() const  { return this->Type == EJSON::Class::String; }
+        bool IsFloat() const   { return this->Type == EJSON::Class::Floating; }
+        bool IsInteger() const { return this->Type == EJSON::Class::Integral; }
+        bool IsBool() const    { return this->Type == EJSON::Class::Boolean; }
 
         // level = 0:normal, 1:condensed, 2:shortest
         static void SetOutputFormat(int level = 0);
@@ -378,17 +402,6 @@ namespace enscape
         static bool spacing_option_3;
     };
 
-    EJSON Array();
-
-    template <typename... T>
-    EJSON Array( T... args )
-    {
-        EJSON arr = EJSON::Make( EJSON::Class::Array );
-        arr.append( args... );
-        return std::move( arr );
-    }
-
-    EJSON Object();
 
     std::ostream& operator<<(std::ostream &os, const EJSON &enscape);
 

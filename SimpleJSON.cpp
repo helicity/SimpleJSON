@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 
 
 #include "SimpleJSON.hpp"
@@ -48,7 +48,280 @@ namespace enscape
             }
             return std::move( output );
         }
+
+        // parsing utilities
+
+        EJSON parse_next(const string &, size_t &);
+
+        void consume_ws(const string &str, size_t &offset)
+        {
+            while (isspace(str[offset])) ++offset;
+        }
+
+        EJSON parse_object(const string &str, size_t &offset)
+        {
+            EJSON Object = EJSON::Make(EJSON::Class::Object);
+
+            ++offset;
+            consume_ws(str, offset);
+            if (str[offset] == '}')
+            {
+                ++offset; return std::move(Object);
+            }
+
+            while (true)
+            {
+                EJSON _Key = parse_next(str, offset);
+                consume_ws(str, offset);
+                if (str[offset] != ':')
+                {
+                    std::cerr << "Error: Object: Expected colon, found '" << str[offset] << "'\n";
+                    break;
+                }
+                consume_ws(str, ++offset);
+                EJSON Value = parse_next(str, offset);
+                Object[_Key.ToString()] = Value;
+
+                consume_ws(str, offset);
+                if (str[offset] == ',')
+                {
+                    ++offset; continue;
+                }
+                else if (str[offset] == '}')
+                {
+                    ++offset; break;
+                }
+                else
+                {
+                    std::cerr << "ERROR: Object: Expected comma, found '" << str[offset] << "'\n";
+                    break;
+                }
+            }
+
+            return std::move(Object);
+        }
+
+        EJSON parse_array(const string &str, size_t &offset)
+        {
+            EJSON Array = EJSON::Make(EJSON::Class::Array);
+            unsigned index = 0;
+
+            ++offset;
+            consume_ws(str, offset);
+            if (str[offset] == ']')
+            {
+                ++offset; return std::move(Array);
+            }
+
+            while (true)
+            {
+                Array[index++] = parse_next(str, offset);
+                consume_ws(str, offset);
+
+                if (str[offset] == ',')
+                {
+                    ++offset; continue;
+                }
+                else if (str[offset] == ']')
+                {
+                    ++offset; break;
+                }
+                else
+                {
+                    std::cerr << "ERROR: Array: Expected ',' or ']', found '" << str[offset] << "'\n";
+                    return std::move(EJSON::Make(EJSON::Class::Array));
+                }
+            }
+
+            return std::move(Array);
+        }
+
+        EJSON parse_string(const string &str, size_t &offset)
+        {
+            EJSON String;
+            string val;
+            for (char c = str[++offset]; c != '\"'; c = str[++offset])
+            {
+                if (c == '\\')
+                {
+                    switch (str[++offset])
+                    {
+                    case '\"': val += '\"'; break;
+                    case '\\': val += '\\'; break;
+                    case '/': val += '/'; break;
+                    case 'b': val += '\b'; break;
+                    case 'f': val += '\f'; break;
+                    case 'n': val += '\n'; break;
+                    case 'r': val += '\r'; break;
+                    case 't': val += '\t'; break;
+                    case 'u':
+                    {
+                        val += "\\u";
+                        for (unsigned i = 1; i <= 4; ++i)
+                        {
+                            c = str[offset + i];
+                            if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
+                            {
+                                val += c;
+                            }
+                            else
+                            {
+                                std::cerr << "ERROR: String: Expected hex character in unicode escape, found '" << c << "'\n";
+                                return std::move(EJSON::Make(EJSON::Class::String));
+                            }
+                        }
+                        offset += 4;
+                    } break;
+                    default: val += '\\'; break;
+                    }
+                }
+                else
+                    val += c;
+            }
+            ++offset;
+            String = val;
+            return std::move(String);
+        }
+
+        EJSON parse_number(const string &str, size_t &offset)
+        {
+            EJSON Number;
+            string val, exp_str;
+            char c;
+            bool isDouble = false;
+            long exp = 0;
+            while (true)
+            {
+                c = str[offset++];
+                if ((c == '-') || (c >= '0' && c <= '9'))
+                {
+                    val += c;
+                }
+                else if (c == '.')
+                {
+                    val += c;
+                    isDouble = true;
+                }
+                else
+                    break;
+            }
+            if (c == 'E' || c == 'e')
+            {
+                c = str[offset++];
+                if (c == '-') { ++offset; exp_str += '-'; }
+                while (true)
+                {
+                    c = str[offset++];
+                    if (c >= '0' && c <= '9')
+                    {
+                        exp_str += c;
+                    }
+                    else if (!isspace(c) && c != ',' && c != ']' && c != '}')
+                    {
+                        std::cerr << "ERROR: Number: Expected a number for exponent, found '" << c << "'\n";
+                        return std::move(EJSON::Make(EJSON::Class::Null));
+                    }
+                    else
+                        break;
+                }
+                exp = std::stol(exp_str);
+            }
+            else if (!isspace(c) && c != ',' && c != ']' && c != '}')
+            {
+                std::cerr << "ERROR: Number: unexpected character '" << c << "'\n";
+                return std::move(EJSON::Make(EJSON::Class::Null));
+            }
+            --offset;
+
+            if (isDouble)
+            {
+                Number = std::stod(val) * std::pow(10, exp);
+            }
+            else
+            {
+                if (!exp_str.empty())
+                    Number = std::stol(val) * std::pow(10, exp);
+                else
+                    Number = std::stol(val);
+            }
+            return std::move(Number);
+        }
+
+        EJSON parse_bool(const string &str, size_t &offset)
+        {
+            EJSON Bool;
+            if (str.substr(offset, 4) == "true")
+            {
+                Bool = true;
+            }
+            else if (str.substr(offset, 5) == "false")
+            {
+                Bool = false;
+            }
+            else
+            {
+                std::cerr << "ERROR: Bool: Expected 'true' or 'false', found '" << str.substr(offset, 5) << "'\n";
+                return std::move(EJSON::Make(EJSON::Class::Null));
+            }
+            offset += (Bool.ToBool() ? 4 : 5);
+            return std::move(Bool);
+        }
+
+        EJSON parse_null(const string &str, size_t &offset)
+        {
+            EJSON Null;
+            if (str.substr(offset, 4) != "null")
+            {
+                std::cerr << "ERROR: Null: Expected 'null', found '" << str.substr(offset, 4) << "'\n";
+                return std::move(EJSON::Make(EJSON::Class::Null));
+            }
+            offset += 4;
+            return std::move(Null);
+        }
+
+        EJSON parse_next(const string &str, size_t &offset)
+        {
+            char value;
+            consume_ws(str, offset);
+            value = str[offset];
+            switch (value)
+            {
+            case '[': return std::move(parse_array(str, offset));
+            case '{': return std::move(parse_object(str, offset));
+            case '\"': return std::move(parse_string(str, offset));
+            case 't':
+            case 'f': return std::move(parse_bool(str, offset));
+            case 'n': return std::move(parse_null(str, offset));
+            default: if ((value <= '9' && value >= '0') || value == '-')
+                return std::move(parse_number(str, offset));
+            }
+            std::cerr << "ERROR: Parse: Unknown starting character '" << value << "'\n";
+            return EJSON();
+        }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     EJSON::EJSON() : Internal(), Type(Class::Null) {}
 
@@ -172,44 +445,80 @@ namespace enscape
         return EJSON::Load(str);
     }
 
+    EJSON EJSON::Load(const string &str)
+    {
+        size_t offset = 0;
+        return std::move(parse_next(str, offset));
+    }
+
+    EJSON EJSON::Object()
+    {
+        return std::move(EJSON::Make(EJSON::Class::Object));
+    }
+
+    EJSON EJSON::Array()
+    {
+        return std::move(EJSON::Make(EJSON::Class::Array));
+    }
+
     EJSON& EJSON::operator[](const string &key)
     {
         SetType( Class::Object );
         if (std::find(Internal.Key->begin(), Internal.Key->end(), key) == Internal.Key->end())
             Internal.Key->push_back(key);
-        return Internal.Map->operator[]( key );
+        return Internal.Map->operator[](key);
     }
+
+    ////const EJSON& EJSON::operator[](const string &key) const
+    ////{
+    ////    if (!IsObject()) return EJSON();
+    ////    if (std::find(Internal.Key->begin(), Internal.Key->end(), key) == Internal.Key->end())
+    ////        return EJSON();
+    ////    return Internal.Map->operator[](key);
+    ////}
 
     EJSON& EJSON::operator[](unsigned index)
     {
-        SetType( Class::Array );
-        if( index >= Internal.List->size() ) Internal.List->resize( index + 1 );
-        return Internal.List->operator[]( index );
+        SetType(Class::Array);
+        if (index >= Internal.List->size()) Internal.List->resize(index + 1);
+        return Internal.List->operator[](index);
     }
 
-    EJSON& EJSON::at(const string &key)
-    {
-        return operator[]( key );
-    }
+    ////const EJSON& EJSON::operator[](const unsigned index) const
+    ////{
+    ////    if (!IsArray()) return EJSON();
+    ////    if (index >= Internal.List->size()) return EJSON();
+    ////    return Internal.List->operator[](index);
+    ////}
+
+    ////EJSON& EJSON::at(const string &key)
+    ////{
+    ////    return operator[]( key );
+    ////}
 
     const EJSON& EJSON::at(const string &key) const
     {
         return Internal.Map->at( key );
     }
 
-    EJSON& EJSON::at(unsigned index)
-    {
-        return operator[]( index );
-    }
+    ////EJSON& EJSON::at(unsigned index)
+    ////{
+    ////    return operator[]( index );
+    ////}
 
     const EJSON& EJSON::at(unsigned index) const
     {
         return Internal.List->at( index );
     }
 
-    void EJSON::remove(const string& key)
+    bool EJSON::remove(const string& key)
     {
-        Internal.Map->erase(key);
+        if (!IsObject())
+            return false;
+
+        if (0 > Internal.Map->erase(key))
+            return false;
+
         deque<string>::iterator it = Internal.Key->begin();
         deque<string>::iterator end = Internal.Key->end();
         for (; it != end; ++it)
@@ -217,15 +526,29 @@ namespace enscape
             if (key == *it)
             {
                 Internal.Key->erase(it);
-                break;
+                return true;
             }
         }
+        return false;
+    }
+
+    bool EJSON::remove(const int index)
+    {
+        if (!IsArray())
+            return false;
+
+        auto it = Internal.List->begin();
+        std::advance(it, index);
+        if (it == Internal.List->end())
+            return false;
+        Internal.List->erase(it);
+        return true;
     }
 
     int EJSON::length() const
     {
         if( Type == Class::Array )
-            return Internal.List->size();
+            return (int)Internal.List->size();
         else
             return -1;
     }
@@ -240,9 +563,9 @@ namespace enscape
     int EJSON::size() const
     {
         if( Type == Class::Object )
-            return Internal.Map->size();
+            return (int)Internal.Map->size();
         else if( Type == Class::Array )
-            return Internal.List->size();
+            return (int)Internal.List->size();
         else
             return -1;
     }
@@ -301,7 +624,7 @@ namespace enscape
 
     string EJSON::dump(int depth) const
     {
-        // ¿ÀºêÁ§Æ®´Â ½ÃÀÛ/³¡ Áß°ıÈ£´Â depth-1 ¸¸Å­ µé¿©¾²°í, ³»ºÎ´Â depth¸¸Å­ µé¿©¾´´Ù
+        // ì˜¤ë¸Œì íŠ¸ëŠ” ì‹œì‘/ë ì¤‘ê´„í˜¸ëŠ” depth-1 ë§Œí¼ ë“¤ì—¬ì“°ê³ , ë‚´ë¶€ëŠ” depthë§Œí¼ ë“¤ì—¬ì“´ë‹¤
         string pad = "";
         string pad_inner = "";
         for (int i = 0; i < depth-1; ++i, pad += TAB);
@@ -321,21 +644,21 @@ namespace enscape
                     auto& it = Internal.Map->find(key);
                     if (it == Internal.Map->end()) continue;
                     auto& p = *it;
-                    bool SecondIsObject = (p.second.Type == Class::Object); // ÅÂ±×¸í µŞºÎºĞÀÌ ¿ÀºêÁ§Æ®ÀÎ°¡ ¾Æ´Ñ°¡
+                    bool SecondIsObject = (p.second.Type == Class::Object); // íƒœê·¸ëª… ë’·ë¶€ë¶„ì´ ì˜¤ë¸Œì íŠ¸ì¸ê°€ ì•„ë‹Œê°€
                     if (!skip)
                     {
                         s += ("," + NEWLINE);
-                        if (SecondIsObject && spacing_option_1) // ÅÂ±×¸í ´ÙÀ½¿¡ Áß°ıÈ£°¡ ½ÃÀÛµÇ´Â °æ¿ì¿¡´Â ÅÂ±×¸í ¾Õ¿¡ °³ÇàÀ» Ãß°¡
+                        if (SecondIsObject && spacing_option_1) // íƒœê·¸ëª… ë‹¤ìŒì— ì¤‘ê´„í˜¸ê°€ ì‹œì‘ë˜ëŠ” ê²½ìš°ì—ëŠ” íƒœê·¸ëª… ì•ì— ê°œí–‰ì„ ì¶”ê°€
                             s += NEWLINE;
                     }
-                    s += (pad_inner + "\"" + p.first + "\"" + SPACE + ":" + SPACE); // ÅÂ±×¸í Ã³¸®
-                    if (SecondIsObject && spacing_option_2) // ÅÂ±×¸í ´ÙÀ½¿¡ Áß°ıÈ£°¡ ½ÃÀÛµÇ´Â °æ¿ì¿¡´Â Áß°ıÈ£ ¾Õ¿¡ °³ÇàÀ» Ãß°¡
+                    s += (pad_inner + "\"" + p.first + "\"" + SPACE + ":" + SPACE); // íƒœê·¸ëª… ì²˜ë¦¬
+                    if (SecondIsObject && spacing_option_2) // íƒœê·¸ëª… ë‹¤ìŒì— ì¤‘ê´„í˜¸ê°€ ì‹œì‘ë˜ëŠ” ê²½ìš°ì—ëŠ” ì¤‘ê´„í˜¸ ì•ì— ê°œí–‰ì„ ì¶”ê°€
                     {
                         s += NEWLINE;
                         s += (TAB + pad);
                     }
 
-                    s += p.second.dump(depth + 1); // ÅÂ±×¸í µŞ ºÎºĞ Ã³¸®
+                    s += p.second.dump(depth + 1); // íƒœê·¸ëª… ë’· ë¶€ë¶„ ì²˜ë¦¬
                     skip = false;
                 }
                 s += (NEWLINE + pad + "}");
@@ -348,7 +671,7 @@ namespace enscape
                 bool skip = true;
                 bool ItemIsObject = (Internal.List->size()>0 && Internal.List->at(0).Type == Class::Object);
 
-                // ¸®½ºÆ® ½ÃÀÛºÎºĞ Ã³¸® (ÆĞµù, °³Çà)
+                // ë¦¬ìŠ¤íŠ¸ ì‹œì‘ë¶€ë¶„ ì²˜ë¦¬ (íŒ¨ë”©, ê°œí–‰)
                 if (ItemIsObject)
                 {
                     if (spacing_option_3)
@@ -363,7 +686,7 @@ namespace enscape
                 {
                     if (!skip)
                     {
-                        // ¸®½ºÆ® ³»ºÎ ¾ÆÀÌÅÛ »çÀÌ Ã³¸® (ÄÄ¸¶, °³Çà)
+                        // ë¦¬ìŠ¤íŠ¸ ë‚´ë¶€ ì•„ì´í…œ ì‚¬ì´ ì²˜ë¦¬ (ì»´ë§ˆ, ê°œí–‰)
                         s += ",";
                         if (p.Type == Class::Object)    s += (NEWLINE + pad_inner);
                         else                            s += (SPACE);
@@ -373,7 +696,7 @@ namespace enscape
                     skip = false;
                 }
 
-                // ¸®½ºÆ® ³¡ Ã³¸® (°³Çà, ÆĞµù))
+                // ë¦¬ìŠ¤íŠ¸ ë ì²˜ë¦¬ (ê°œí–‰, íŒ¨ë”©))
                 if (ItemIsObject)   s += (NEWLINE + pad + "]");
                 else                s += (SPACE+"]");
                 return s;
@@ -470,279 +793,10 @@ namespace enscape
     bool EJSON::spacing_option_2 = false;
     bool EJSON::spacing_option_3 = false;
 
-
-    EJSON Array()
-    {
-        return std::move( EJSON::Make( EJSON::Class::Array ) );
-    }
-
-    EJSON Object()
-    {
-        return std::move( EJSON::Make( EJSON::Class::Object ) );
-    }
-
     std::ostream& operator<<( std::ostream &os, const EJSON &enscape )
     {
         os << enscape.dump();
         return os;
-    }
-
-    // parsing utilities
-    namespace
-    {
-        EJSON parse_next( const string &, size_t & );
-
-        void consume_ws( const string &str, size_t &offset )
-        {
-            while( isspace( str[offset] ) ) ++offset;
-        }
-
-        EJSON parse_object( const string &str, size_t &offset )
-        {
-            EJSON Object = EJSON::Make( EJSON::Class::Object );
-
-            ++offset;
-            consume_ws( str, offset );
-            if( str[offset] == '}' )
-            {
-                ++offset; return std::move( Object );
-            }
-
-            while( true )
-            {
-                EJSON _Key = parse_next( str, offset );
-                consume_ws( str, offset );
-                if( str[offset] != ':' )
-                {
-                    std::cerr << "Error: Object: Expected colon, found '" << str[offset] << "'\n";
-                    break;
-                }
-                consume_ws( str, ++offset );
-                EJSON Value = parse_next( str, offset );
-                Object[_Key.ToString()] = Value;
-            
-                consume_ws( str, offset );
-                if( str[offset] == ',' )
-                {
-                    ++offset; continue;
-                }
-                else if( str[offset] == '}' )
-                {
-                    ++offset; break;
-                }
-                else
-                {
-                    std::cerr << "ERROR: Object: Expected comma, found '" << str[offset] << "'\n";
-                    break;
-                }
-            }
-
-            return std::move( Object );
-        }
-
-        EJSON parse_array( const string &str, size_t &offset )
-        {
-            EJSON Array = EJSON::Make( EJSON::Class::Array );
-            unsigned index = 0;
-        
-            ++offset;
-            consume_ws( str, offset );
-            if( str[offset] == ']' )
-            {
-                ++offset; return std::move( Array );
-            }
-
-            while( true )
-            {
-                Array[index++] = parse_next( str, offset );
-                consume_ws( str, offset );
-
-                if( str[offset] == ',' )
-                {
-                    ++offset; continue;
-                }
-                else if( str[offset] == ']' )
-                {
-                    ++offset; break;
-                }
-                else
-                {
-                    std::cerr << "ERROR: Array: Expected ',' or ']', found '" << str[offset] << "'\n";
-                    return std::move( EJSON::Make( EJSON::Class::Array ) );
-                }
-            }
-
-            return std::move( Array );
-        }
-
-        EJSON parse_string( const string &str, size_t &offset )
-        {
-            EJSON String;
-            string val;
-            for( char c = str[++offset]; c != '\"' ; c = str[++offset] )
-            {
-                if( c == '\\' )
-                {
-                    switch( str[ ++offset ] )
-                    {
-                    case '\"': val += '\"'; break;
-                    case '\\': val += '\\'; break;
-                    case '/' : val += '/' ; break;
-                    case 'b' : val += '\b'; break;
-                    case 'f' : val += '\f'; break;
-                    case 'n' : val += '\n'; break;
-                    case 'r' : val += '\r'; break;
-                    case 't' : val += '\t'; break;
-                    case 'u' :
-                    {
-                        val += "\\u" ;
-                        for( unsigned i = 1; i <= 4; ++i )
-                        {
-                            c = str[offset+i];
-                            if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
-                            {
-                                val += c;
-                            }
-                            else
-                            {
-                                std::cerr << "ERROR: String: Expected hex character in unicode escape, found '" << c << "'\n";
-                                return std::move( EJSON::Make( EJSON::Class::String ) );
-                            }
-                        }
-                        offset += 4;
-                    } break;
-                    default  : val += '\\'; break;
-                    }
-                }
-                else
-                    val += c;
-            }
-            ++offset;
-            String = val;
-            return std::move( String );
-        }
-
-        EJSON parse_number( const string &str, size_t &offset )
-        {
-            EJSON Number;
-            string val, exp_str;
-            char c;
-            bool isDouble = false;
-            long exp = 0;
-            while( true )
-            {
-                c = str[offset++];
-                if ((c == '-') || (c >= '0' && c <= '9'))
-                {
-                    val += c;
-                }
-                else if( c == '.' )
-                {
-                    val += c; 
-                    isDouble = true;
-                }
-                else
-                    break;
-            }
-            if( c == 'E' || c == 'e' )
-            {
-                c = str[ offset++ ];
-                if( c == '-' ) { ++offset; exp_str += '-';}
-                while( true )
-                {
-                    c = str[ offset++ ];
-                    if (c >= '0' && c <= '9')
-                    {
-                        exp_str += c;
-                    }
-                    else if( !isspace( c ) && c != ',' && c != ']' && c != '}' )
-                    {
-                        std::cerr << "ERROR: Number: Expected a number for exponent, found '" << c << "'\n";
-                        return std::move( EJSON::Make( EJSON::Class::Null ) );
-                    }
-                    else
-                        break;
-                }
-                exp = std::stol( exp_str );
-            }
-            else if( !isspace( c ) && c != ',' && c != ']' && c != '}' )
-            {
-                std::cerr << "ERROR: Number: unexpected character '" << c << "'\n";
-                return std::move( EJSON::Make( EJSON::Class::Null ) );
-            }
-            --offset;
-        
-            if (isDouble)
-            {
-                Number = std::stod(val) * std::pow(10, exp);
-            }
-            else
-            {
-                if( !exp_str.empty() )
-                    Number = std::stol( val ) * std::pow( 10, exp );
-                else
-                    Number = std::stol( val );
-            }
-            return std::move( Number );
-        }
-
-        EJSON parse_bool( const string &str, size_t &offset )
-        {
-            EJSON Bool;
-            if (str.substr(offset, 4) == "true")
-            {
-                Bool = true;
-            }
-            else if (str.substr(offset, 5) == "false")
-            {
-                Bool = false;
-            }
-            else
-            {
-                std::cerr << "ERROR: Bool: Expected 'true' or 'false', found '" << str.substr( offset, 5 ) << "'\n";
-                return std::move( EJSON::Make( EJSON::Class::Null ) );
-            }
-            offset += (Bool.ToBool() ? 4 : 5);
-            return std::move( Bool );
-        }
-
-        EJSON parse_null( const string &str, size_t &offset )
-        {
-            EJSON Null;
-            if( str.substr( offset, 4 ) != "null" )
-            {
-                std::cerr << "ERROR: Null: Expected 'null', found '" << str.substr( offset, 4 ) << "'\n";
-                return std::move( EJSON::Make( EJSON::Class::Null ) );
-            }
-            offset += 4;
-            return std::move( Null );
-        }
-
-        EJSON parse_next( const string &str, size_t &offset )
-        {
-            char value;
-            consume_ws( str, offset );
-            value = str[offset];
-            switch( value )
-            {
-                case '[' : return std::move( parse_array( str, offset ) );
-                case '{' : return std::move( parse_object( str, offset ) );
-                case '\"': return std::move( parse_string( str, offset ) );
-                case 't' :
-                case 'f' : return std::move( parse_bool( str, offset ) );
-                case 'n' : return std::move( parse_null( str, offset ) );
-                default  : if( ( value <= '9' && value >= '0' ) || value == '-' )
-                               return std::move( parse_number( str, offset ) );
-            }
-            std::cerr << "ERROR: Parse: Unknown starting character '" << value << "'\n";
-            return EJSON();
-        }
-    }
-
-    EJSON EJSON::Load( const string &str )
-    {
-        size_t offset = 0;
-        return std::move( parse_next( str, offset ) );
     }
 
 } // End Namespace enscape
