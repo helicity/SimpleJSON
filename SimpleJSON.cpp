@@ -384,6 +384,26 @@ namespace enscape
         Type = other.Type;
     }
 
+    EJSON::EJSON(Class type)
+    {
+        switch (type)
+        {
+        case Class::Object:
+            Internal.Map =      new map<string, EJSON>();
+            Internal.Key =      new deque<string>();
+            break;
+        case Class::Array:
+            Internal.List =     new deque<EJSON>();
+            break;
+        case Class::String:
+            Internal.String =   new string();
+            break;
+        default:
+            break;
+        }
+        Type = type;
+    }
+
     EJSON& EJSON::operator=(const EJSON &other)
     {
         ClearInternal();
@@ -461,50 +481,75 @@ namespace enscape
         return std::move(EJSON::Make(EJSON::Class::Array));
     }
 
-    EJSON& EJSON::operator[](const string &key)
+
+
+    EJSON EJSON::DefaultObject(EJSON::Class::Object);
+    EJSON EJSON::DefaultArray (EJSON::Class::Array);
+    EJSON EJSON::DefaultNull  (EJSON::Class::Null);
+
+    /*
+    EJSON obj = EJSON::Object();
+    obj["haha"] = 3;            // 자동으로 생기거나 overwite
+    int i       = obj["hoho"];  // EJSON()리턴 (자동으로 안생김)
+    obj[3]      = "a";          // 아무일 없음. 디버그 assertion. (Array로 암묵적인 변경은 안됨)
+    int i       = obj[3];       // EJSON()리턴 (Array가 아니므로)
+
+    EJSON arr = EJSON::Array();
+    arr["haha"] = 3;            // 아무일 없음. 디버그 assertion. (Object로 암묵적인 변경은 안됨)
+    int i       = arr["hoho"];  // EJSON()리턴 (Object가 아니므로)
+    arr[3]      = "a";          // 자동으로 생기거나 overwite
+    int i       = arr[3];       // EJSON()리턴 (자동으로 안생김)
+
+    */
+
+    EJSON::proxy_obj EJSON::operator[](const string &key)
     {
-        SetType( Class::Object );
-        if (std::find(Internal.Key->begin(), Internal.Key->end(), key) == Internal.Key->end())
-            Internal.Key->push_back(key);
-        return Internal.Map->operator[](key);
+        return proxy_obj((*this),key);
     }
 
-    ////const EJSON& EJSON::operator[](const string &key) const
-    ////{
-    ////    if (!IsObject()) return EJSON();
-    ////    if (std::find(Internal.Key->begin(), Internal.Key->end(), key) == Internal.Key->end())
-    ////        return EJSON();
-    ////    return Internal.Map->operator[](key);
-    ////}
-
-    EJSON& EJSON::operator[](unsigned index)
+    const EJSON::proxy_obj EJSON::operator[](const string &key) const
     {
-        SetType(Class::Array);
-        if (index >= Internal.List->size()) Internal.List->resize(index + 1);
-        return Internal.List->operator[](index);
+        return proxy_obj(*const_cast<EJSON*>(this), key);
     }
 
-    ////const EJSON& EJSON::operator[](const unsigned index) const
-    ////{
-    ////    if (!IsArray()) return EJSON();
-    ////    if (index >= Internal.List->size()) return EJSON();
-    ////    return Internal.List->operator[](index);
-    ////}
+    EJSON::proxy_obj EJSON::operator[](const char* key)
+    {
+        return operator[](std::string(key));
+    }
 
-    ////EJSON& EJSON::at(const string &key)
-    ////{
-    ////    return operator[]( key );
-    ////}
+    const EJSON::proxy_obj EJSON::operator[](const char* key) const
+    {
+        return operator[](std::string(key));
+    }
+
+    EJSON::proxy_arr EJSON::operator[](int index)
+    {
+        return proxy_arr(*this, index);
+    }
+
+    const EJSON::proxy_arr EJSON::operator[](const int index) const
+    {
+        return proxy_arr(*const_cast<EJSON*>(this), index);
+    }
+
+
+
+
+
+    EJSON& EJSON::at(const string &key)
+    {
+        return Internal.Map->at(key);
+    }
 
     const EJSON& EJSON::at(const string &key) const
     {
         return Internal.Map->at( key );
     }
 
-    ////EJSON& EJSON::at(unsigned index)
-    ////{
-    ////    return operator[]( index );
-    ////}
+    EJSON& EJSON::at(unsigned index)
+    {
+        return Internal.List->at(index);
+    }
 
     const EJSON& EJSON::at(unsigned index) const
     {
@@ -555,8 +600,15 @@ namespace enscape
 
     bool EJSON::hasKey(const string &key) const
     {
-        if( Type == Class::Object )
-            return Internal.Map->find( key ) != Internal.Map->end();
+        if (Type == Class::Object)
+            return Internal.Map->find(key) != Internal.Map->end();
+        return false;
+    }
+
+    bool EJSON::hasIndex(const int index) const
+    {
+        if (Type == Class::Array)
+            return index >= 0 && index < (int)Internal.List->size();
         return false;
     }
 

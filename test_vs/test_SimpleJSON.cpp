@@ -26,6 +26,36 @@ int _tmain(int argc, _TCHAR* argv[])
 
     if (1)
     {
+        // operator[] 참조 테스트
+        // 
+        // LHS 는 없으면 생겨야 하고
+        // LHS가 타입이 다르면 바뀌지 않는다.
+        // 이때 assert로 DEBUG에서만 경고한다.
+        // 
+        // RHS는 없으면 null이나 기본값이 나와야 한다
+
+        EJSON a = EJSON::Array();
+        int i = a[3];   // EJSON()리턴 (자동으로 안생김)
+std::cout << a << "----------" << std::endl;
+        a[3] = "a";     // 없으면 자동으로 생김
+std::cout << a << "----------" << std::endl;
+        a[3] = 22;      // 있으면 overwrite
+std::cout << a << "----------" << std::endl;
+        a[3] = EJSON::Array("ridia", "jack");
+std::cout << a << "----------" << std::endl;
+
+
+        a[3][1] = "aaaa"; // a[3]이 이미 array이므로 [1]로 인덱싱 할 수 있다.
+
+std::cout << a << "----------" << std::endl;
+
+        a[3][1] = EJSON::Object({ "haha", 1, "hoho", 2 });
+
+        std::cout << "--------------------------------------------\n";
+    }
+
+    if (0)
+    {
         EJSON obj;
 
         // 오브젝트 동적으로 생성 (오브젝트는 string으로 인덱싱 한다)
@@ -35,17 +65,8 @@ int _tmain(int argc, _TCHAR* argv[])
         std::cout << obj << std::endl;
         std::cout << "--------------------------------------------\n";
 
-//        obj["name"] = obj.at("score");
-//        obj.at("score") = "26";
-
-
-        obj["score"] = obj["name"];
-
-
-        ////LHS 는 없으면 생겨야 하고
-        ////    RHS는 없으면 null이 나와야 한다
-
-
+        obj["name"] = obj.at("score");
+        obj.at("score") = "26";
         std::cout << obj << std::endl;
         std::cout << "--------------------------------------------\n";
 
@@ -67,6 +88,11 @@ int _tmain(int argc, _TCHAR* argv[])
         std::ifstream file_in("1.json");
         //std::ifstream file_in("2.json");
         EJSON obj = EJSON::Load(file_in);
+
+
+//이런식으로 중첩하는 경우의 관계 해결
+
+        obj[1]["aa"][3] = "aaaa";
 
         obj["measurement"]["size"]["preprocessing"] = "afjlaskfjlasdfjlsakdjflsakdjflsakjfl";
 

@@ -71,7 +71,7 @@ void test()
     std::cout << "--------------------------------------------\n";
 
     // 오브젝트 종류 변경 (기존 데이터는 경고없이 다날아감!)
-    obj[0] = 111; // array로 변경
+    obj[0] = 111; // 에러. 암묵적인 변경은 안됨
     obj = true; // bool 로 변경
     obj = "Test String"; // string으로 변경
     std::cout << obj << std::endl;
@@ -122,6 +122,7 @@ void test()
 #include <ostream>
 #include <iostream>
 #include <sstream>
+#include <cassert>
 
 namespace enscape
 {
@@ -150,9 +151,9 @@ namespace enscape
             map<string, EJSON>* Map    = nullptr;
             deque<string>*      Key    = nullptr;
             string*             String = nullptr;
-            double              Float;
-            long                Int;
-            bool                Bool;
+            double              Float  = .0f;
+            long                Int    = 0;
+            bool                Bool   = false;
         } Internal;
 
     public:
@@ -201,7 +202,15 @@ namespace enscape
         EJSON& operator=(EJSON&& other);
         EJSON(const EJSON &other);
         EJSON& operator=(const EJSON &other);
+        EJSON(Class type);
         ~EJSON();
+
+        EJSON(int val)          { SetType(Class::Integral); Internal.Int    = val; }
+        EJSON(std::string val)  { SetType(Class::String);  *Internal.String = val; }
+        EJSON(const char* val)  { SetType(Class::String);  *Internal.String = val; }
+        EJSON(bool val)         { SetType(Class::Boolean);  Internal.Bool   = val; }
+        EJSON(double val)       { SetType(Class::Floating); Internal.Float  = val; }
+        EJSON(float val)        { SetType(Class::Floating); Internal.Float  = val; }
 
         template <typename T>
         EJSON( T b, typename enable_if<is_same<T,bool>::value>::type* = 0 ) : Internal( b ), Type( Class::Boolean ){}
@@ -232,6 +241,14 @@ namespace enscape
             EJSON arr = EJSON::Make(EJSON::Class::Array);
             arr.append(args...);
             return std::move(arr);
+        }
+
+        static EJSON Object(std::initializer_list<EJSON> list)
+        {
+            EJSON obj = EJSON::Make(EJSON::Class::Object);
+            for (auto i = list.begin(), e = list.end(); i != e; ++i, ++i)
+                obj.operator[](i->ToString()) = *std::next(i);
+            return std::move(obj);
         }
 
         template <typename T>
@@ -270,13 +287,241 @@ namespace enscape
             SetType( Class::String ); *Internal.String = string( s ); return *this;
         }
 
-        EJSON& operator[](const string& key);
-        ////const EJSON& operator[](const string& key) const;
+        operator int        () const { if (Type==Class::Integral) return  Internal.Int;             return 0; }
+        operator std::string() const { if (Type==Class::String)   return *Internal.String;          return ""; }
+        operator const char*() const { if (Type==Class::String)   return  Internal.String->c_str(); return nullptr; }
+        operator bool       () const { if (Type==Class::Boolean)  return  Internal.Bool;            return false; }
+        operator double     () const { if (Type==Class::Floating) return  Internal.Float;           return .0; }
+        operator float      () const { if (Type==Class::Floating) return  (float)Internal.Float;    return .0f; }
 
-        EJSON& operator[](unsigned index);
-        ////const EJSON& operator[](const unsigned index) const;
+    public:
 
-        ////EJSON &at(const string &key);
+        struct proxy_obj;
+        struct proxy_arr;
+
+        // from https://stackoverflow.com/questions/7410559/c-overloading-operators-based-on-the-side-of-assignment/7411385#7411385
+        // operator[] 의 lhs, rhs 를 구분해서 처리하기 위해 아래 proxy class를 둔다.
+        // 아래와 같은 경우를 처리하기 위해서이다.
+        // 
+        // EJSON json;
+        // json["haha"] = 3; // Object일 경우 자동으로 생기게 하고 싶다.
+        // int i = json["hoho"]; // 자동으로 생기면 안된다!
+        //
+        friend struct proxy_obj;
+        struct proxy_obj {
+            EJSON& obj;
+            const string key;
+
+            proxy_obj(EJSON& ej, const string &ke) : obj(ej), key(ke) {}
+
+            operator int()         { return (int)obj; }
+            operator std::string() { return (std::string&)obj; }
+
+            /* 규칙
+
+            if (오브젝트이면)
+            {
+                if (키있으면)
+                {
+                    // lhs는 그거 업데이트 하고 그거 리턴
+                    // rhs는 그거 리턴
+                }
+                else
+                {
+                    // rhs는 널 리턴
+                    // lhs는 자동으로 생성
+                }
+            }
+            else
+            if (어레이이면)
+            {
+                // rhs는 널 리턴
+                // lhs는 아무일 없음 & 디버그 assert
+            }
+            else
+            {
+                // rhs는 널 리턴
+                // lhs는 아무일 없음 & 디버그 assert
+            }
+            */
+
+            // RHS
+            operator const EJSON& () const
+            {
+                if (obj.IsObject())
+                {
+                    // 키있으면
+                    if (obj.hasKey(key))
+                    {
+                        // 키있으면 그거 리턴
+                        return (*obj.Internal.Map)[key];
+                    }
+                }
+
+                return EJSON::DefaultNull;
+            }
+
+            // LHS
+            proxy_obj& operator=(const EJSON& rhs)
+            {
+                if (obj.IsObject())
+                {
+                    // 키없으면
+                    if (!obj.hasKey(key))
+                    {
+                        // lhs는 자동으로 생성
+                        obj.Internal.Key->push_back(key);
+                    }
+
+                    // 키있으면 그거 업데이트 하고 그거 리턴
+                    obj = (*obj.Internal.Map)[key];
+                    obj = rhs;
+                    return *this;
+                }
+
+                // lhs는 아무일 없음 & 디버그 assert
+                assert(false && "오브젝트 아닌 거에 오브젝트 항목을 넣으려고 한다!");
+                return *this;
+            }
+
+            proxy_obj operator[](const string& key2)
+            {
+                //기존 인덱스 존재하면 그거를 프록시로 만들어서 리턴
+                if (obj.hasKey(this->key))
+                {
+                    // rhs는 그거 리턴
+                    return proxy_obj((*obj.Internal.Map)[this->key], key2);
+                }
+
+                //없으면 널프록시 리턴
+                return std::move(proxy_obj(EJSON::DefaultObject, key2));
+            }
+
+            proxy_obj operator[](const char* key2)
+            {
+                return std::move(this->operator[](std::string(key2)));
+            }
+
+            proxy_arr operator[](int index2)
+            {
+                return std::move(proxy_arr(EJSON::DefaultArray, index2));
+            }
+        };
+
+        friend struct proxy_arr;
+        struct proxy_arr {
+            EJSON& arr;
+            const int index;
+
+            proxy_arr(EJSON& ej, int ind) : arr(ej), index(ind) {}
+
+            operator int()         { return (int)arr; }
+            operator std::string() { return (std::string&)arr; }
+
+            /* 규칙
+
+            if (어레이이면)
+            {
+                if (인덱스있으면)
+                {
+                    // rhs는 그거 리턴
+                    // lhs는 그거 업데이트 하고 그거 리턴
+                }
+                else
+                {
+                    // rhs는 널 리턴
+                    // lhs는 자동으로 생성
+                }
+            }
+            else
+            if (오브젝트이면)
+            {
+                // rhs는 널 리턴
+                // lhs는 아무일 없음 & 디버그 assert
+            }
+            else
+            {
+                // rhs는 널 리턴
+                // lhs는 아무일 없음 & 디버그 assert
+            }
+            */
+
+            // RHS
+            operator const EJSON& () const
+            {
+                if (arr.IsArray())
+                {
+                    // 인덱스있으면
+                    if (arr.hasIndex(index))
+                    {
+                        // rhs는 그거 리턴
+                        return arr.Internal.List->operator[](index);
+                    }
+                }
+
+                return EJSON::DefaultNull;
+            }
+
+            // LHS
+            proxy_arr& operator=(const EJSON& rhs)
+            {
+                if (arr.IsArray())
+                {
+                    // 키없으면
+                    if (!arr.hasIndex(index))
+                    {
+                        // lhs는 자동으로 생성
+                        arr.Internal.List->resize(index + 1);
+                    }
+
+                    // 키있으면 그거 업데이트 하고 그거 리턴
+                    (*arr.Internal.List)[index] = rhs;
+                    return *this;
+                }
+
+                // lhs는 아무일 없음 & 디버그 assert
+                assert(false && "어레이 아닌 거에 어레이 항목을 넣으려고 한다!");
+                return *this;
+            }
+
+            proxy_obj operator[](const string& key)
+            {
+                return proxy_obj(EJSON::DefaultObject, key);
+            }
+            proxy_obj operator[](const char* key)
+            {
+                return proxy_obj(EJSON::DefaultObject, key);
+            }
+
+            proxy_arr operator[](int index2)
+            {
+                //기존 인덱스 존재하면 그거를 프록시로 만들어서 리턴
+                if (arr.hasIndex(this->index))
+                {
+                    // rhs는 그거 리턴
+                    return proxy_arr((*arr.Internal.List)[this->index], index2);
+                }
+
+                //없으면 널프록시 리턴
+                return proxy_arr(EJSON::DefaultArray, index2);
+            }
+        };
+        static EJSON DefaultObject;
+        static EJSON DefaultArray;
+        static EJSON DefaultNull;
+
+    public:
+
+        proxy_obj operator[](const string& key);
+        const proxy_obj operator[](const string& key) const;
+
+        proxy_obj operator[](const char* key);
+        const proxy_obj operator[](const char* key) const;
+
+        proxy_arr operator[](int index);
+        const proxy_arr operator[](const int index) const;
+
+        EJSON &at(const string &key);
 
         const EJSON &at(const string &key) const;
 
@@ -340,6 +585,7 @@ namespace enscape
         }
 
         bool hasKey(const string &key) const;
+        bool hasIndex(const int index) const;
 
         int size() const;
 
