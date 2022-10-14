@@ -26,31 +26,19 @@ int _tmain(int argc, _TCHAR* argv[])
 
     if (1)
     {
-        // operator[] 참조 테스트
-        // 
-        // LHS 는 없으면 생겨야 하고
-        // LHS가 타입이 다르면 바뀌지 않는다.
-        // 이때 assert로 DEBUG에서만 경고한다.
-        // 
-        // RHS는 없으면 null이나 기본값이 나와야 한다
-
         EJSON a = EJSON::Array();
-        int i = a[3];   // EJSON()리턴 (자동으로 안생김)
-std::cout << a << "----------" << std::endl;
-        a[3] = "a";     // 없으면 자동으로 생김
-std::cout << a << "----------" << std::endl;
-        a[3] = 22;      // 있으면 overwrite
-std::cout << a << "----------" << std::endl;
+        int i = a[3];
+std::cout << a << std::endl;
+        a[3] = "a";
+std::cout << a << std::endl;
+        a[3] = 22;
+std::cout << a << std::endl;
         a[3] = EJSON::Array("ridia", "jack");
-std::cout << a << "----------" << std::endl;
-
-
-        a[3][1] = "aaaa"; // a[3]이 이미 array이므로 [1]로 인덱싱 할 수 있다.
-
-std::cout << a << "----------" << std::endl;
-
+std::cout << a << std::endl;
+        a[3][0] = "aaaa";
+std::cout << a << std::endl;
         a[3][1] = EJSON::Object({ "haha", 1, "hoho", 2 });
-
+        std::cout << a << std::endl;
         std::cout << "--------------------------------------------\n";
     }
 
